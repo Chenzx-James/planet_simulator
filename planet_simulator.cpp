@@ -93,7 +93,7 @@ void iterate(long long T){
         	if(log_) printf("%lld : %lld\n", time / log_gap, time);
             // fprintf(file, "%lld\n", time);
             for(Planet plt : planets){
-                fprintf(file, "%.4Lf\n%.4Lf\n", plt.p.x / 1e9, plt.p.y / 1e9);
+                fprintf(file, "%.Lf\n%.Lf\n", plt.p.x / 1e9, plt.p.y / 1e9);
             }
 		}
     }
