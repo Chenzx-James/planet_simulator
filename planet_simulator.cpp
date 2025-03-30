@@ -122,6 +122,7 @@ int main(int argc, const char * argv[]){
     //     planets[i].p = Dot(1.5e11 + 1e10 * cos(2 * M_PI / (N - 1) * (i - 2)), 1e10 * sin(2 * M_PI / (N - 1) * (i - 2)));
     //     planets[i].v = Dot(-3e4 * sin(2 * M_PI / (N - 1) * (i - 2)), 3e4 * cos(2 * M_PI / (N - 1) * (i - 2)));
     // }
+    
     for(int i = 2; i < N; i++){
         planets[i].id = i + 1;
         planets[i].mass = 6e2;
