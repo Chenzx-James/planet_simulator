@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <title>Planet Simulator</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="planetCanvas" width="1200" height="700"></canvas>
+    <script>
+        function resizeCanvas() {
+            const canvas = document.getElementById('planetCanvas');
+            canvas.width = window.innerWidth - 20;
+            canvas.height = window.innerHeight - 100;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+    </script>
+    <script>
+        // -------------------------------------
+        // Resizing the canvas to fit the window
+        // -------------------------------------
+        function resizeCanvas() {
+            const canvas = document.getElementById('planetCanvas');
+            canvas.width = window.innerWidth - 20;
+            canvas.height = window.innerHeight - 100;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // -----------------------------------------------
+        // JavaScript code to handle the planet simulation
+        // -----------------------------------------------
+        const colors = ["red", "blue", "orange", "gold", "green", "grey", "purple", "pink", "cyan"];
+        const canvas = document.getElementById('planetCanvas');
+        const ctx = canvas.getContext('2d');
+        // let loop = true;
+
+        // document.getElementById('toggleLoop').addEventListener('click', () => {
+        //     loop = !loop;
+        // });
+
+        fetch('o9')
+            .then(response => response.text())
+            .then(data => {
+                const lines = data.split('\n');
+                const numObjects = parseInt(lines[0]);
+
+                let lineIndex = 1;
+                const time = parseInt(lines[lineIndex++]);
+                let currentTime = 0;
+
+                function draw() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    for (let t = 0; t < numObjects; t++) {
+                        const x = parseFloat(lines[lineIndex++]);
+                        const y = parseFloat(lines[lineIndex++]);
+                        ctx.beginPath();
+                        ctx.arc(x + canvas.width / 2, y + canvas.height / 2, 5, 0, 2 * Math.PI);
+                        ctx.fillStyle = colors[t % colors.length];
+                        ctx.fill();
+                    }
+                    currentTime++;
+                    if (currentTime >= time) {
+                        // if (loop) {
+                            currentTime = 0;
+                            lineIndex = 2;
+                        // } else {
+                        //     clearInterval(intervalId);
+                        // }
+                    }
+                }
+
+                const intervalId = setInterval(draw, 1000 / 60);
+            });
+    </script>
+</body>
+</html>
