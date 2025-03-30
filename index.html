@@ -11,6 +11,8 @@
 </head>
 <body>
     <canvas id="planetCanvas" width="1200" height="700"></canvas>
+    <button id="pauseButton">暂停</button>
+    <button id="playButton" style="display: none;">播放</button>
     <script>
         function resizeCanvas() {
             const canvas = document.getElementById('planetCanvas');
@@ -40,11 +42,6 @@
         const colors = ["red", "blue", "orange", "gold", "green", "grey", "purple", "pink", "cyan"];
         const canvas = document.getElementById('planetCanvas');
         const ctx = canvas.getContext('2d');
-        // let loop = true;
-
-        // document.getElementById('toggleLoop').addEventListener('click', () => {
-        //     loop = !loop;
-        // });
 
         fetch('o9')
             .then(response => response.text())
@@ -56,7 +53,11 @@
                 const time = parseInt(lines[lineIndex++]);
                 let currentTime = 0;
 
+                let intervalId;
+                let isPaused = false;
+
                 function draw() {
+                    if (isPaused) return;
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     for (let t = 0; t < numObjects; t++) {
                         const x = parseFloat(lines[lineIndex++]);
@@ -68,16 +69,24 @@
                     }
                     currentTime++;
                     if (currentTime >= time) {
-                        // if (loop) {
-                            currentTime = 0;
-                            lineIndex = 2;
-                        // } else {
-                        //     clearInterval(intervalId);
-                        // }
+                        currentTime = 0;
+                        lineIndex = 2;
                     }
                 }
 
-                const intervalId = setInterval(draw, 1000 / 60);
+                intervalId = setInterval(draw, 1000 / 60);
+
+                document.getElementById('pauseButton').addEventListener('click', () => {
+                    isPaused = true;
+                    document.getElementById('pauseButton').style.display = 'none';
+                    document.getElementById('playButton').style.display = 'inline';
+                });
+
+                document.getElementById('playButton').addEventListener('click', () => {
+                    isPaused = false;
+                    document.getElementById('playButton').style.display = 'none';
+                    document.getElementById('pauseButton').style.display = 'inline';
+                });
             });
     </script>
 </body>
