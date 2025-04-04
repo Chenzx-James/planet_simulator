@@ -5,6 +5,7 @@
         "random": "cpp",
         "valarray": "cpp",
         "algorithm": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "vector": "cpp"
     }
 }
