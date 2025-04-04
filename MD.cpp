@@ -25,6 +25,9 @@ public:
     
     Atom(std::string el, long double m, long double q) 
         : element(el), mass(m), charge(q), position(3,0), velocity(3,0), force(3,0) {}
+    
+    Atom() 
+        : element(0), mass(0), charge(0), position(3,0), velocity(3,0), force(3,0) {}
 };
 
 // 分子系统类
@@ -71,7 +74,7 @@ public:
                     // 总力
                     // no lj
                     long double f = electrostaticForce;
-                    f = fmin(f, 1e-7); // 限制最大力
+                    f = fmin(f, 1e-8); // 限制最大力
                     // printf("Force of %s and %s: %e %e\n", atoms[i].element.c_str(), atoms[j].element.c_str(), ljForce, electrostaticForce);
                     
                     // 分配力到各分量
@@ -185,6 +188,28 @@ int main() {
     // 创建系统: 温度300K，时间步长1fs
     MolecularSystem system(300.0, 1e-15);
     
+    // 随机10个Oxygen和20个Hydrogen原子
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<long double> dist(-10e-10, 10e-10);
+    for (int i = 0; i < 40; ++i) {
+        Atom o("O", 2.656e-26, -2*e); // 氧原子质量
+        o.position[0] = dist(gen);
+        o.position[1] = dist(gen);
+        o.position[2] = dist(gen);
+        system.addAtom(o);
+        Atom h1("H", 1.673e-27, e); // 氢原子质量
+        h1.position[0] = dist(gen);
+        h1.position[1] = dist(gen);
+        h1.position[2] = dist(gen);
+        system.addAtom(h1);
+        Atom h2("H", 1.673e-27, e); // 氢原子质量
+        h2.position[0] = dist(gen);
+        h2.position[1] = dist(gen);
+        h2.position[2] = dist(gen);
+        system.addAtom(h2);
+    }
+
     // 添加一些原子 (示例: 氧和氢)
     Atom o1("O", 2.656e-26, -2*e); // 氧原子质量
     Atom h1("H", 1.673e-27, e); // 氢原子质量
@@ -200,17 +225,18 @@ int main() {
     h1.position = {0.957e-10, 0.0, 0.0};
     h2.position = {-0.239e-10, 0.927e-10, 0.0};
 
+
     c1.position = {0.0, 0.0, 0.0};
     o2.position = {-1.16e-10, 0.0, 0.0};
     o3.position = {1.16e-10, 0, 0.0};
     
-    // system.addAtom(o1);
-    // system.addAtom(h1);
-    // system.addAtom(h2);
+    system.addAtom(o1);
+    system.addAtom(h1);
+    system.addAtom(h2);
     
-    system.addAtom(c1);
-    system.addAtom(o2);
-    system.addAtom(o3);
+    // system.addAtom(c1);
+    // system.addAtom(o2);
+    // system.addAtom(o3);
 
     // 运行1000步模拟
     printf("%d\n", int(system.getAtomCount()));

@@ -6,6 +6,7 @@
         "valarray": "cpp",
         "algorithm": "cpp",
         "string": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "__node_handle": "cpp"
     }
 }
