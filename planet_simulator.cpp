@@ -65,37 +65,50 @@ void init_args(int argc, const char * argv[]){
     }
 }
 
-void adapt_p(){
-    for(Planet *plt = planets; plt - planets < N; plt++){
-        plt->p = plt->p + Dot(plt->v.x, plt->v.y) * timestep;
+void adapt_p_verlet(vector<Dot>& accelerations) {
+    for (int i = 0; i < N; i++) {
+        planets[i].p = planets[i].p + planets[i].v * timestep + 0.5 * accelerations[i] * pow2(timestep);
     }
 }
 
-void adapt_v(){
-    for(Planet *plt = planets; plt - planets < N; plt++){
-        for(Planet *x = planets; x - planets < N; x++){
-            if(x->id != plt->id){
-                plt->v = plt->v + G*x->mass*(x->p-plt->p)/(pow2(plt->p.x - x->p.x) + pow2(plt->p.y - x->p.y))/geo_dis(plt->p, x->p)* timestep;
+vector<Dot> compute_accelerations() {
+    vector<Dot> accelerations(N, Dot(0, 0));
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            if (i != j) {
+                Dot direction = planets[j].p - planets[i].p;
+                long double distance = geo_dis(planets[i].p, planets[j].p);
+                accelerations[i] = accelerations[i] + G * planets[j].mass * direction / pow2(distance) / distance;
             }
         }
     }
+    return accelerations;
 }
 
-void iterate(long long T){
+void adapt_v_verlet(const vector<Dot>& old_accelerations, const vector<Dot>& new_accelerations) {
+    for (int i = 0; i < N; i++) {
+        planets[i].v = planets[i].v + 0.5 * (old_accelerations[i] + new_accelerations[i]) * timestep;
+    }
+}
+
+void iterate(long long T) {
     fprintf(file, "%lld\n", T / log_gap);
     long long time = 0, gaps = -1;
-    while((time += timestep) < T){
-        adapt_p();
-        adapt_v();
-        if(time / log_gap != gaps){
+    vector<Dot> accelerations = compute_accelerations();
+    while ((time += timestep) < T) {
+        adapt_p_verlet(accelerations);
+        vector<Dot> new_accelerations = compute_accelerations();
+        adapt_v_verlet(accelerations, new_accelerations);
+        accelerations = new_accelerations;
+
+        if (time / log_gap != gaps) {
             gaps = time / log_gap;
-            if(slow_) this_thread::sleep_for((chrono::microseconds(1)));
-        	if(log_) printf("%lld : %lld\n", time / log_gap, time);
-            // fprintf(file, "%lld\n", time);
-            for(Planet plt : planets){
+            if (slow_) this_thread::sleep_for((chrono::microseconds(1)));
+            if (log_) printf("%lld : %lld\n", time / log_gap, time);
+            for (Planet plt : planets) {
                 fprintf(file, "%.Lf\n%.Lf\n", plt.p.x / 1e9, plt.p.y / 1e9);
             }
-		}
+        }
     }
 }
 
