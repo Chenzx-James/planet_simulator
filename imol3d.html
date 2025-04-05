@@ -49,6 +49,7 @@
                 let lineIndex = 3;
                 const scale = 30;
                 const spheres = [];
+                const hobonds = [];
                 const colors1 = ["red", "blue", "orange", "gold", "green", "grey", "purple", "pink", "cyan"];
                 const colors = ["red", "grey", "grey"];
 
@@ -58,6 +59,21 @@
                     const sphere = new THREE.Mesh(geometry, material);
                     spheres.push(sphere);
                     scene.add(sphere);
+                }
+
+                // add line
+                for (let t = 0; t < numObjects; t += 3) {
+                    const hobond1 = [];
+                    const hobond2 = [];
+                    const dynamicGeometry1 = new THREE.BufferGeometry().setFromPoints(hobond1);
+                    const dynamicGeometry2 = new THREE.BufferGeometry().setFromPoints(hobond2);
+                    const material = new THREE.LineBasicMaterial({ color: "white" });
+                    const dynamicLine1 = new THREE.Line(dynamicGeometry1, material);
+                    const dynamicLine2 = new THREE.Line(dynamicGeometry2, material);
+                    hobonds.push(dynamicLine1);
+                    hobonds.push(dynamicLine2);
+                    scene.add(dynamicLine1);
+                    scene.add(dynamicLine2);
                 }
 
                 let currentTime = 0;
@@ -72,6 +88,10 @@
                         const y = parseFloat(lines[lineIndex++]) * scale;
                         const z = parseFloat(lines[lineIndex++]) * scale;
                         spheres[t].position.set(x, y, z);
+                        if (t % 3 == 0) {
+                            hobonds[t/3*2].geometry.setFromPoints([spheres[t].position.clone(), spheres[t + 1].position.clone()]);
+                            hobonds[t/3*2+1].geometry.setFromPoints([spheres[t].position.clone(), spheres[t + 2].position.clone()]);
+                        }
                     }
                     document.getElementById('hbounds').textContent = parseFloat(lines[lineIndex++]);
                     currentTime++;
