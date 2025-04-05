@@ -57,6 +57,7 @@
                         const scale = 10.0;
                         const x = parseFloat(lines[lineIndex++])*scale;
                         const y = parseFloat(lines[lineIndex++])*scale;
+                        lineIndex++;
                         ctx.beginPath();
                         ctx.arc(x + canvas.width / 2, y + canvas.height / 2, 5, 0, 2 * Math.PI);
                         ctx.fillStyle = colors[t % colors.length];
