@@ -252,6 +252,64 @@ public:
         }
     }
 
+    void integrateStep1() {
+        std::vector<Vec3> forcesO_prev(waters.size()), forcesH1_prev(waters.size()), forcesH2_prev(waters.size());
+        // 第一次力计算
+        computeForces(forcesO_prev, forcesH1_prev, forcesH2_prev);
+
+        // 更新平动速度半步
+        for (size_t i = 0; i < waters.size(); ++i) {
+            Water& w = waters[i];
+            Vec3 totalForce = forcesO_prev[i] + forcesH1_prev[i] + forcesH2_prev[i];
+            Vec3 accel = totalForce * (1.0 / Water::mass);
+            w.velocity += accel * (timeStep / 2); // 平动速度半步更新
+        }
+
+        // 更新旋转速度半步
+        for (size_t i = 0; i < waters.size(); ++i) {
+            Water& w = waters[i];
+            // 计算力矩
+            Vec3 rH1 = w.orient.rotate(w.h1Rel);
+            Vec3 rH2 = w.orient.rotate(w.h2Rel);
+            Vec3 torque = rH1.cross(forcesH1_prev[i]) + rH2.cross(forcesH2_prev[i]);
+            // 转换到本体坐标系
+            Quaternion inv = w.orient.conjugate();
+            Vec3 torqueBody = inv.rotate(torque);
+            Vec3 omegaBody = inv.rotate(w.angularVel);
+            // 计算角加速度
+            Vec3 alphaBody(
+                (torqueBody.x - (omegaBody.y * omegaBody.z * (w.inertia.z - w.inertia.y))) / w.inertia.x,
+                (torqueBody.y - (omegaBody.z * omegaBody.x * (w.inertia.x - w.inertia.z))) / w.inertia.y,
+                (torqueBody.z - (omegaBody.x * omegaBody.y * (w.inertia.y - w.inertia.x))) / w.inertia.z
+            );
+            Vec3 alpha = w.orient.rotate(alphaBody);
+            // 角速度半步更新
+            w.angularVel += alpha * (timeStep / 2);
+        }
+    }
+
+    void integrateStep2() {
+        // 更新位置和方向
+        for (size_t i = 0; i < waters.size(); ++i) {
+            Water& w = waters[i];
+            w.position += w.velocity * timeStep; // 平动位置更新
+            applyPBC(w.position);
+            w.orient.integrate(w.angularVel, timeStep); // 方向更新
+        }
+
+        // 第二次力计算
+        std::vector<Vec3> forcesO_new(waters.size()), forcesH1_new(waters.size()), forcesH2_new(waters.size());
+        computeForces(forcesO_new, forcesH1_new, forcesH2_new);
+
+        // 更新平动速度后半步
+        for (size_t i = 0; i < waters.size(); ++i) {
+            Water& w = waters[i];
+            Vec3 totalForce = forcesO_new[i] + forcesH1_new[i] + forcesH2_new[i];
+            Vec3 accel = totalForce * (1.0 / Water::mass);
+            w.velocity += accel * (timeStep / 2); // 平动速度后半步更新
+        }
+    }
+
     void applyThermostat() {
         double totalKE = 0;
         for (auto& w : waters) {
@@ -272,7 +330,9 @@ public:
         fprintf(file, "%.2lf\n", boxSize);
         fprintf(file, "%d\n", Iterations/LogStep-1);
         for (int step = 0; step < Iterations; ++step) {
-            integrate();
+            // integrate();
+            integrateStep1();  // 第一步：更新速度半步
+            integrateStep2();  // 第二步：更新位置+方向，重新计算力，完成速度更新
             if (step % 1 == 0) applyThermostat();
 
             // 输出轨迹
