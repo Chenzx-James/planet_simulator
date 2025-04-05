@@ -74,7 +74,7 @@ public:
                     // 总力
                     // no lj
                     long double f = electrostaticForce;
-                    f = fmin(f, 1e-8); // 限制最大力
+                    f = fmin(f, 1e-7); // 限制最大力
                     // printf("Force of %s and %s: %e %e\n", atoms[i].element.c_str(), atoms[j].element.c_str(), ljForce, electrostaticForce);
                     
                     // 分配力到各分量
@@ -153,14 +153,14 @@ public:
             if(step%LogStep == 0){
                 if (SimpleOutput){
                     for (const auto& atom : atoms) {
-                        printf("%Lf\n%Lf\n", atom.position[0]*1e11*2,
+                        printf("%.0Lf\n%.0Lf\n", atom.position[0]*1e11*2,
                                             atom.position[1]*1e11*2);
                     }
                     // 在b.txt中输出atom:force
-                    for (const auto& atom : atoms) {
-                        fprintf(b, "Atom %s: Force (%LE)\n", atom.element.c_str(), sqrt(atom.force[0]*atom.force[0] + atom.force[1]*atom.force[1] + atom.force[2]*atom.force[2]));
-                    }
-                    fprintf(b, "\n");
+                    // for (const auto& atom : atoms) {
+                    //     fprintf(b, "Atom %s: Force (%LE)\n", atom.element.c_str(), sqrt(atom.force[0]*atom.force[0] + atom.force[1]*atom.force[1] + atom.force[2]*atom.force[2]));
+                    // }
+                    // fprintf(b, "\n");
                 }
                 else{
                     printf("Step %d:\n", step);
@@ -192,7 +192,8 @@ int main() {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<long double> dist(-10e-10, 10e-10);
-    for (int i = 0; i < 40; ++i) {
+    std::uniform_real_distribution<long double> dist1(-1, 1);
+    for (int i = 0; i < 10; ++i) {
         Atom o("O", 2.656e-26, -2*e); // 氧原子质量
         o.position[0] = dist(gen);
         o.position[1] = dist(gen);
