@@ -6,6 +6,8 @@
 #define LogStep 1
 #define Iterations 1000
 
+FILE *file;
+
 // 三维向量
 struct Vec3 {
     double x, y, z;
@@ -108,23 +110,24 @@ public:
         // 初始化水分子位置
         int perSide = static_cast<int>(std::ceil(std::cbrt(nWaters)));
         double spacing = box / perSide;
-        std::mt19937 gen(42);
+        std::random_device rd;
+        std::mt19937 gen(rd());
         std::normal_distribution<double> velDist(0.0, std::sqrt(kB * temp / Water::mass));
 
         for (int i = 0; i < nWaters; ++i) {
             Water w;
             w.position = Vec3(
-                (i % perSide) * spacing,
-                ((i / perSide) % perSide) * spacing,
-                (i / (perSide * perSide)) * spacing
+                ((i % perSide) * spacing + boxSize) / 3,
+                (((i / perSide) % perSide) * spacing + boxSize) / 3,
+                ((i / (perSide * perSide)) * spacing + boxSize) / 3
             );
             // 初始速度
-            w.velocity = Vec3(velDist(gen), velDist(gen), velDist(gen));
+            w.velocity = Vec3(velDist(gen)*1, velDist(gen)*1, velDist(gen)*1);
             waters.push_back(w);
         }
     }
 
-    void analyzeHBonds(const std::vector<Water>& waters, double maxDist = 3.0, double minAngle = 150.0) {
+    int analyzeHBonds(const std::vector<Water>& waters, double maxDist = 3.0, double minAngle = 150.0) {
         int hbonds = 0;
         for (size_t i = 0; i < waters.size(); ++i) {
             const Water& wi = waters[i];
@@ -148,6 +151,7 @@ public:
                 }
             }
         }
+        return hbonds;
         printf("Hydrogen bonds: %d\n", hbonds);
     }
 
@@ -264,32 +268,34 @@ public:
     }
 
     void run() {
-        printf("%lu\n", waters.size()*3);
-        printf("%d\n", Iterations/LogStep);
+        fprintf(file, "%lu\n", waters.size()*3);
+        fprintf(file, "%.2lf\n", boxSize);
+        fprintf(file, "%d\n", Iterations/LogStep-1);
         for (int step = 0; step < Iterations; ++step) {
             integrate();
-            if (step % 100 == 0) applyThermostat();
+            if (step % 1 == 0) applyThermostat();
 
             // 输出轨迹
             if (step % LogStep == 0) {
                 for (auto& w : waters) {
-                    printf("%lf %lf\n", (w.position.x-boxSize/2)*15, (w.position.y-boxSize/2)*15);
+                    double scale = 1.0;
+                    fprintf(file, "%.2lf\n%.2lf\n%.2lf\n", (w.position.x-boxSize/2)*scale, (w.position.y-boxSize/2)*scale, (w.position.z-boxSize/2)*scale);
                     Vec3 h1 = w.h1Pos(), h2 = w.h2Pos();
-                    printf("%lf %lf\n", (h1.x-boxSize/2)*15, (h1.y-boxSize/2)*15);
-                    printf("%lf %lf\n", (h2.x-boxSize/2)*15, (h2.y-boxSize/2)*15);
-                    // printf("%lf %lf %lf\n", w.position.x, w.position.y, w.position.z);
-                    // Vec3 h1 = w.h1Pos(), h2 = w.h2Pos();
-                    // printf("%lf %lf %lf\n", h1.x, h1.y, h1.z);
-                    // printf("%lf %lf %lf\n", h2.x, h2.y, h2.z);
+                    fprintf(file, "%.2lf\n%.2lf\n%.2lf\n", (h1.x-boxSize/2)*scale, (h1.y-boxSize/2)*scale, (h1.z-boxSize/2)*scale);
+                    fprintf(file, "%.2lf\n%.2lf\n%.2lf\n", (h2.x-boxSize/2)*scale, (h2.y-boxSize/2)*scale, (h2.z-boxSize/2)*scale);
                 }
+                fprintf(file, "%d\n", analyzeHBonds(waters));
             }
         }
     }
 };
 
 int main() {
-    freopen("t", "w", stdout);
-    Simulation sim(2, 30.0, 10.0, 300.0, 0.001); // 100水分子，30Å盒子，10Å截断，300K，0.001ps步长
+    // freopen("t", "w", stdout);
+    file = fopen("t", "w");
+    // 300K=26°C
+    // 400K=127°C
+    Simulation sim(10, 5.0, 10.0, 300.0, 0.001); // 100水分子，30Å盒子，10Å截断，300K，0.001ps步长
     sim.run();
     return 0;
 }

@@ -14,6 +14,7 @@
     <button id="pauseButton">暂停</button>
     <button id="playButton" style="display: none;">播放</button>
     <div>循环次数: <span id="loopCount">0</span></div>
+    <div>氢键数: <span id="hbounds">0</span></div>
     <script>
         // -------------------------------------
         // Resizing the canvas to fit the window
@@ -42,8 +43,10 @@
                 const lines = data.split('\n');
                 const numObjects = parseInt(lines[0]);
 
-                let lineIndex = 2;
-                const time = parseInt(lines[1]);
+                let lineIndex = 3;
+                canvas.width = parseFloat(lines[1])*30;
+                canvas.height = parseFloat(lines[1])*30;
+                const time = parseInt(lines[2]);
                 let currentTime = 0;
 
                 let intervalId;
@@ -54,7 +57,7 @@
                     if (isPaused) return;
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     for (let t = 0; t < numObjects; t++) {
-                        const scale = 10.0;
+                        const scale = 30.0;
                         const x = parseFloat(lines[lineIndex++])*scale;
                         const y = parseFloat(lines[lineIndex++])*scale;
                         lineIndex++;
@@ -63,16 +66,17 @@
                         ctx.fillStyle = colors[t % colors.length];
                         ctx.fill();
                     }
+                    document.getElementById('hbounds').textContent = parseFloat(lines[lineIndex++]);
                     currentTime++;
                     if (currentTime >= time) {
                         currentTime = 0;
-                        lineIndex = 2;
+                        lineIndex = 3;
                         loopCount++;
                         document.getElementById('loopCount').textContent = loopCount;
                     }
                 }
 
-                intervalId = setInterval(draw, 1000 / 60);
+                intervalId = setInterval(draw, 1000 / 30);
 
                 document.getElementById('pauseButton').addEventListener('click', () => {
                     isPaused = true;
