@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <title>Planet Simulator</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <button id="pauseButton">暂停</button>
+    <button id="playButton" style="display: none;">播放</button>
+    <div>循环次数: <span id="loopCount">0</span></div>
+    <div>氢键数: <span id="hbounds">0</span></div>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // 初始化场景、相机和渲染器
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // 添加光源
+        const light1 = new THREE.DirectionalLight(0xffffff, 1);
+        light1.position.set(1, 1, 1);
+        scene.add(light1);
+
+        const light2 = new THREE.AmbientLight(0x404040);
+        scene.add(light2);
+
+        // 设置相机位置
+        camera.position.z = 50;
+
+        // 添加轨道控制器（实现鼠标交互）
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // 数据加载与对象创建
+        fetch('t')
+            .then(response => response.text())
+            .then(data => {
+                const lines = data.split('\n');
+                const numObjects = parseInt(lines[0]);
+
+                let lineIndex = 3;
+                const scale = 30;
+                const spheres = [];
+                const colors1 = ["red", "blue", "orange", "gold", "green", "grey", "purple", "pink", "cyan"];
+                const colors = ["red", "grey", "grey"];
+
+                for (let t = 0; t < numObjects; t++) {
+                    const geometry = new THREE.SphereGeometry(10, 15, 15);
+                    const material = new THREE.MeshPhongMaterial({ color: colors[t % colors.length] });
+                    const sphere = new THREE.Mesh(geometry, material);
+                    spheres.push(sphere);
+                    scene.add(sphere);
+                }
+
+                let currentTime = 0;
+                const time = parseInt(lines[2]);
+                let loopCount = 0;
+                let isPaused = false;
+
+                function updatePositions() {
+                    if (isPaused) return;
+                    for (let t = 0; t < numObjects; t++) {
+                        const x = parseFloat(lines[lineIndex++]) * scale;
+                        const y = parseFloat(lines[lineIndex++]) * scale;
+                        const z = parseFloat(lines[lineIndex++]) * scale;
+                        spheres[t].position.set(x, y, z);
+                    }
+                    document.getElementById('hbounds').textContent = parseFloat(lines[lineIndex++]);
+                    currentTime++;
+                    if (currentTime >= time) {
+                        currentTime = 0;
+                        lineIndex = 3;
+                        loopCount++;
+                        document.getElementById('loopCount').textContent = loopCount;
+                    }
+                }
+
+                // 动画循环
+                function animate() {
+                    requestAnimationFrame(animate);
+                    updatePositions();
+                    controls.update(); // 更新控制器
+                    renderer.render(scene, camera);
+                }
+                animate();
+
+                // 暂停与播放按钮
+                document.getElementById('pauseButton').addEventListener('click', () => {
+                    isPaused = true;
+                    document.getElementById('pauseButton').style.display = 'none';
+                    document.getElementById('playButton').style.display = 'inline';
+                });
+
+                document.getElementById('playButton').addEventListener('click', () => {
+                    isPaused = false;
+                    document.getElementById('playButton').style.display = 'none';
+                    document.getElementById('pauseButton').style.display = 'inline';
+                });
+            });
+
+        // 响应窗口大小变化
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

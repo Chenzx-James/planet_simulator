@@ -109,7 +109,7 @@ public:
         : boxSize(box), cutoff(cut), temp(t), timeStep(dt) {
         // 初始化水分子位置
         int perSide = static_cast<int>(std::ceil(std::cbrt(nWaters)));
-        double spacing = box / perSide;
+        double spacing = box / 2 / perSide;
         std::random_device rd;
         std::mt19937 gen(rd());
         std::normal_distribution<double> velDist(0.0, std::sqrt(kB * temp / Water::mass));
@@ -117,9 +117,9 @@ public:
         for (int i = 0; i < nWaters; ++i) {
             Water w;
             w.position = Vec3(
-                ((i % perSide) * spacing + boxSize) / 3,
-                (((i / perSide) % perSide) * spacing + boxSize) / 3,
-                ((i / (perSide * perSide)) * spacing + boxSize) / 3
+                ((i % perSide) * spacing + box / 2) / 3,
+                (((i / perSide) % perSide) * spacing + box / 2) / 3,
+                ((i / (perSide * perSide)) * spacing + box / 2) / 3
             );
             // 初始速度
             w.velocity = Vec3(velDist(gen)*1, velDist(gen)*1, velDist(gen)*1);
@@ -355,7 +355,7 @@ int main() {
     file = fopen("t", "w");
     // 300K=26°C
     // 400K=127°C
-    Simulation sim(10, 5.0, 10.0, 300.0, 0.001); // 100水分子，30Å盒子，10Å截断，300K，0.001ps步长
+    Simulation sim(10, 30.0, 10.0, 300.0, 0.001); // 100水分子，30Å盒子，10Å截断，300K，0.001ps步长
     sim.run();
     return 0;
 }
